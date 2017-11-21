@@ -18,10 +18,13 @@ package com.karumi.screenshot;
 
 import android.app.Activity;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.espresso.contrib.RecyclerViewActions;
+import android.support.test.espresso.core.deps.guava.collect.Lists;
 import android.support.test.espresso.intent.rule.IntentsTestRule;
 import com.karumi.screenshot.di.MainComponent;
 import com.karumi.screenshot.di.MainModule;
 import com.karumi.screenshot.model.SuperHero;
+import com.karumi.screenshot.model.SuperHeroBuilder;
 import com.karumi.screenshot.model.SuperHeroesRepository;
 import com.karumi.screenshot.ui.view.MainActivity;
 import it.cosenonjaviste.daggermock.DaggerMockRule;
@@ -32,6 +35,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static org.mockito.Mockito.when;
 
 public class MainActivityTest extends ScreenshotTest {
@@ -51,7 +56,7 @@ public class MainActivityTest extends ScreenshotTest {
   @Rule public IntentsTestRule<MainActivity> activityRule =
       new IntentsTestRule<>(MainActivity.class, true, false);
 
-  @Mock SuperHeroesRepository repository;
+  @Mock private SuperHeroesRepository repository;
 
   @Test public void showsEmptyCaseIfThereAreNoSuperHeroes() {
     givenThereAreNoSuperHeroes();
@@ -61,12 +66,61 @@ public class MainActivityTest extends ScreenshotTest {
     compareScreenshot(activity);
   }
 
+  @Test
+  public void shouldShouldSuperHeroes() throws Exception {
+    givenThereAreSomeSuperHeroes(5, false);
+
+    Activity activity = startActivity();
+
+    compareScreenshot(activity);
+  }
+
+  @Test
+  public void shouldShowFooterWhenScrollToLatestValue() throws Exception {
+    final List<SuperHero> superHeroes = givenThereAreSomeSuperHeroes(200, true);
+    final MainActivity activity = startActivity();
+
+    onView(withId(R.id.recycler_view)).perform(RecyclerViewActions.scrollToPosition(superHeroes.size() - 1));
+
+    compareScreenshot(activity);
+  }
+
+  @Test
+  public void shouldShowBadgeWhenSuperHeroes() throws Exception {
+    givenThereAreSomeSuperHeroes(Lists.newArrayList(false, true, false, true));
+
+    final MainActivity activity = startActivity();
+
+    compareScreenshot(activity);
+  }
+
   private List<SuperHero> givenThereAreSomeSuperHeroes(int numberOfSuperHeroes, boolean avengers) {
     List<SuperHero> superHeroes = new LinkedList<>();
     for (int i = 0; i < numberOfSuperHeroes; i++) {
       String superHeroName = "SuperHero - " + i;
       String superHeroDescription = "Description Super Hero - " + i;
-      SuperHero superHero = new SuperHero(superHeroName, null, avengers, superHeroDescription);
+      SuperHero superHero = new SuperHeroBuilder().setName(superHeroName)
+          .setPhoto(null)
+          .setIsAvenger(avengers)
+          .setDescription(superHeroDescription)
+          .createSuperHero();
+      superHeroes.add(superHero);
+      when(repository.getByName(superHeroName)).thenReturn(superHero);
+    }
+    when(repository.getAll()).thenReturn(superHeroes);
+    return superHeroes;
+  }
+
+  private List<SuperHero> givenThereAreSomeSuperHeroes(List<Boolean> avengers) {
+    List<SuperHero> superHeroes = new LinkedList<>();
+    for (int i = 0; i < avengers.size(); i++) {
+      String superHeroName = "SuperHero - " + i;
+      String superHeroDescription = "Description Super Hero - " + i;
+      SuperHero superHero = new SuperHeroBuilder().setName(superHeroName)
+          .setPhoto(null)
+          .setIsAvenger(avengers.get(i))
+          .setDescription(superHeroDescription)
+          .createSuperHero();
       superHeroes.add(superHero);
       when(repository.getByName(superHeroName)).thenReturn(superHero);
     }

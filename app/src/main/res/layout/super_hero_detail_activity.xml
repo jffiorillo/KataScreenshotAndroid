@@ -21,6 +21,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.karumi.screenshot.ui.view.MainActivity"
+    android:id="@+id/scroll_view"
     >
 
 
@@ -79,6 +80,7 @@
           android:layout_marginTop="@dimen/default_margin"
           android:textColor="@android:color/white"
           android:textSize="@dimen/title_text_size"
+          android:maxLines="1"
           />
 
       <TextView
